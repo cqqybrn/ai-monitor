@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+
+# 数据文件 (大, 可重新拉取)
+data/
+*.parquet
+*.csv
+
+# 测试输出
+*.log
+nohup.out
+
+# IDE
+.vscode/
+.idea/
+.cursor/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# 状态文件 (重要, 但建议手动同步而不是 git, 避免冲突)
+.signal_state.json
+
+# 临时 / 调试脚本 (可选)
+debug_*.py
+check_*.py
+test_*.py
+sim_*.py
+analyze_*.py
+compare_*.py
+detail_*.py
+eval_*.py
+find_*.py
+last_month_*.py
+us_tech_*.py
+stx_*.py
+dump_*.py
+portfolio_sim*.py
+scan_signals.py
+
+# 备份
+*.bak
