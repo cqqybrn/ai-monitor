@@ -13,7 +13,11 @@ from config import YF_HISTORY_DAYS_1H, YF_HISTORY_DAYS_1D
 
 
 def _to_ohlcv(df: pd.DataFrame) -> pd.DataFrame:
-    """把 yfinance 返回的 DataFrame 转成统一 schema (毫秒时间戳)"""
+    """把 yfinance 返回的 DataFrame 转成统一 schema (毫秒时间戳)
+
+    重要: 过滤 volume=0 的 phantom bar — yfinance prepost 时段
+    偶尔会把无成交的虚价 tick 当成真实 OHLC, 触发假信号.
+    """
     if df.empty:
         return pd.DataFrame(columns=["open_time", "open", "high", "low", "close", "volume", "close_time"])
     df = df.copy()
@@ -22,7 +26,19 @@ def _to_ohlcv(df: pd.DataFrame) -> pd.DataFrame:
     df = df.rename(columns={"Open": "open", "High": "high", "Low": "low", "Close": "close", "Volume": "volume"})
     idx = pd.to_datetime(df.index, utc=True).as_unit("ns")
     df["open_time"] = idx.astype("int64") // 1_000_000
-    return df.reset_index(drop=True)[["open_time", "open", "high", "low", "close", "volume"]]
+    out = df.reset_index(drop=True)[["open_time", "open", "high", "low", "close", "volume"]]
+    # 过滤 phantom: volume==0 或 OHLC 异常 (low 超过 close 的 50% 以下, 明显错 tick)
+    out = out[out["volume"] > 0].copy()
+    if not out.empty:
+        out["_close_prev"] = out["close"].shift(1)
+        # low 不可能跌破前根 close 的 30% (即下跌 70%) - 这是 phantom tick 标志
+        bad_mask = (out["low"] < out["_close_prev"] * 0.3) & out["_close_prev"].notna()
+        if bad_mask.any():
+            n_bad = int(bad_mask.sum())
+            print(f"  ⚠️ 过滤 {n_bad} 根 OHLC 异常 bar (low 跌破前 close 70%)")
+            out = out[~bad_mask]
+        out = out.drop(columns=["_close_prev"])
+    return out.reset_index(drop=True)
 
 
 def _add_close_time(df: pd.DataFrame, interval_ms: int) -> pd.DataFrame:
