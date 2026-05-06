@@ -369,7 +369,7 @@ def notify_replay(
     console.print(f"[green]✓ 推送完成[/green]")
 
 
-@app.command("notify-init")
+@app.command("notify-test")
 def notify_test():
     """发送一条测试消息到 Discord, 验证 webhook 配置正确"""
     from src.notifier import send_text, send_signal_card

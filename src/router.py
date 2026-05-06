@@ -16,32 +16,51 @@ from src.notifier import send_signal_card, send_text, send_summary
 from config import STOCK_DIR
 
 
-# 锁定的 watchlist (24 个) + 各自最优 TF
+# 锁定的 watchlist (27 个) + 各自最优 TF
+# 2026 Q2 调整: 淘汰 PLTR/SOUN/CEG/ADI, 新加 CRWV/AVAV/RKLB/SYM/TEM/IONQ/WULF
 WATCHLIST = {
+    # === 存储 ===
     "SNDK": ("8h", "存储"),
     "DELL": ("8h", "存储"),
     "MU":   ("4h", "存储"),
     "WDC":  ("8h", "存储"),
     "STX":  ("4h", "存储"),
+    # === 光模块 / 光网络 ===
     "CRDO": ("8h", "光模块"),
     "CIEN": ("8h", "光网络"),
     "LITE": ("8h", "光模块"),
     "AAOI": ("8h", "光模块"),
     "COHR": ("4h", "光模块"),
     "NOK":  ("8h", "5G/光网络"),
+    # === AI 云基础设施 ===
     "NBIS": ("4h", "AI云"),
+    "CRWV": ("4h", "AI云"),       # ★新加
+    # === CPU / 处理器 ===
     "AMD":  ("4h", "CPU"),
     "INTC": ("8h", "CPU"),
+    # === 晶圆代工 / 半导设备 ===
     "TSM":  ("4h", "晶圆代工"),
     "LRCX": ("8h", "半导设备"),
     "AMAT": ("8h", "半导设备"),
+    # === 模拟 / 微控制器 ===
     "TXN":  ("4h", "模拟"),
-    "ADI":  ("4h", "模拟"),
     "MCHP": ("8h", "微控制器"),
-    "SOUN": ("8h", "AI语音"),
-    "PLTR": ("4h", "AI软件"),
+    # === 数据中心电力 ===
     "VRT":  ("4h", "数据中心电力"),
-    "CEG":  ("8h", "核电AI"),
+    # === 防务 / 航天 ===
+    "AVAV": ("4h", "防务/无人机"),  # ★新加
+    "RKLB": ("4h", "商业航天"),     # ★新加
+    # === AI 实物机器人 / 医疗 AI ===
+    "SYM":  ("4h", "AI机器人"),     # ★新加
+    "TEM":  ("4h", "医疗AI"),       # ★新加
+    # === BTC 矿 / AI 数据中心租赁 ===
+    "WULF": ("4h", "BTC/AI数据中心"),  # ★新加
+    # === AI 实物机器人 (narrative bet, 数据弱) ===
+    "SYM":  ("4h", "AI机器人"),       # ★新加 (Calmar -0.10, 押热点)
+    # === 医疗 AI / 药物发现 (narrative bet, 数据弱) ===
+    "TEM":  ("4h", "医疗AI"),         # ★新加 (Calmar -0.37, 押热点)
+    # === 光网络测试 (NOK 同类) ===
+    "VIAV": ("8h", "光网络测试"),     # ★新加 (Calmar 1.04)
 }
 
 GRADE_RANK = {"S": 5, "A": 4, "B": 3, "C": 2, "D": 1}

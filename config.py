@@ -32,17 +32,32 @@ STOCK_SYMBOLS = [
     # 晶圆代工
     "TSM",
     # 模拟 / 工业 / 汽车芯片 (SOXX 大权重)
-    "TXN", "ADI", "MCHP", "ON", "NXPI", "MPWR",
+    "TXN", "MCHP", "ON", "NXPI", "MPWR",
     # AI 网络芯片 / 高速 IO
     "MRVL",
     # AI 服务器 / 系统集成
     "SMCI", "HPE",
     # AI 软件
-    "PLTR", "AI", "SOUN",
+    "AI",
     # 数据中心电力 / 冷却
-    "VRT", "GEV", "CEG", "ETN",
+    "VRT", "GEV", "ETN",
     # AI 云基础设施 (GPU 租赁)
     "NBIS", "CRWV",
+    # === 2026 Q2 新加 ===
+    # 防务 / 无人机
+    "AVAV",
+    # 商业航天
+    "RKLB",
+    # AI 实物机器人 / 仓储自动化
+    "SYM",
+    # 医疗 AI / 药物发现
+    "TEM",
+    # 量子计算 (高 beta)
+    "IONQ",
+    # BTC 矿企 / AI 数据中心租赁
+    "WULF",
+    # 5G/通信设备 (NOK 同类候选)
+    "ERIC", "VIAV",
 ]
 
 INTERVALS = ["1h", "2h", "4h", "8h", "1d"]
