@@ -276,16 +276,24 @@ def grade_backtest(
 
 
 @app.command("notify-init")
-def notify_init():
-    """初始化 .signal_state.json — 静默记录当前状态, 不推送历史信号"""
+def notify_init(
+    push_current: bool = typer.Option(True, help="同时把每个标的当前最新 long 信号推送到 Discord (作为当前持仓快照)"),
+):
+    """初始化 .signal_state.json + 可选推送当前活跃持仓快照"""
     from src.router import _get_states_for, _save_state, _load_state, WATCHLIST, GRADE_RANK, MIN_GRADE
+    from src.notifier import send_signal_card, send_text
+    from datetime import datetime, timezone, timedelta
+
     state = _load_state()
     min_r = GRADE_RANK[MIN_GRADE]
     initialized = 0
+    pushed = 0
+    long_active = []
+    if push_current:
+        send_text(f"📦 **AI Tech Monitor 当前持仓快照** — 扫描 {len(WATCHLIST)} 个标的的最新 ≥B 信号 ...")
     for sym, (interval, sector) in WATCHLIST.items():
-        states, _, _ = _get_states_for(sym, interval)
+        states, cur_price, cur_time = _get_states_for(sym, interval)
         if not states: continue
-        # 找最新一个 ≥B 信号 (作为基线)
         latest = None
         for s in reversed(states):
             if GRADE_RANK.get(s.grade, 0) >= min_r:
@@ -296,9 +304,32 @@ def notify_init():
                 "last_action": "BUY" if latest.direction == "long" else "SELL",
             }
             initialized += 1
+            # 推送当前活跃 long 持仓
+            if push_current and latest.direction == "long":
+                slip = (cur_price - latest.entry_price) / latest.entry_price * 100
+                age_h = (cur_time - latest.entry_time_ms) / 1000 / 3600
+                try:
+                    send_signal_card(
+                        symbol=sym, direction="BUY",
+                        grade=latest.grade, score=latest.score,
+                        price=latest.entry_price, sector=sector, tf=interval,
+                        current_price=cur_price, slippage_pct=slip,
+                        reason=f"📦 当前活跃持仓 ({age_h:.1f}h 前触发)",
+                        signal_time_ms=latest.entry_time_ms,
+                    )
+                    pushed += 1
+                    long_active.append(f"{sym} {latest.grade}({latest.score}) ${latest.entry_price:.2f}")
+                    import time; time.sleep(1.0)  # rate limit
+                except Exception as e:
+                    console.print(f"  ⚠️ 推送 {sym} 失败: {e}")
     _save_state(state)
     console.print(f"[green]✓ 初始化完成: 记录 {initialized} 个标的的当前状态[/green]")
-    console.print(f"[cyan]之后 notify-once 只会推送比这个时间点新的信号[/cyan]")
+    if push_current:
+        console.print(f"[green]✓ 已推送 {pushed} 个当前活跃 long 持仓到 Discord[/green]")
+        if long_active:
+            console.print("[bold]活跃持仓:[/bold]")
+            for l in long_active: console.print(f"  🟢 {l}")
+    console.print(f"[cyan]之后 notify-once 只会推送比当前更新的信号[/cyan]")
 
 
 @app.command("notify-replay")
