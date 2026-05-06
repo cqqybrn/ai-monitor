@@ -26,7 +26,7 @@ STOCK_SYMBOLS = [
     # 光模块 / 网络设备 (AI 数据中心 + 5G)
     "CIEN", "LITE", "COHR", "AAOI", "FN", "NOK", "CRDO", "ALAB",
     # CPU / 处理器 + IP
-    "INTC", "AMD", "QCOM", "ARM",
+    "INTC", "AMD", "QCOM", "ARM",  # QCOM (汽车芯片 + AI PC + 5G modem narrative)
     # 半导体设备 (光刻 / 蚀刻 / 测量)
     "KLAC", "LRCX", "AMAT", "ASML",
     # 晶圆代工

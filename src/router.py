@@ -38,6 +38,7 @@ WATCHLIST = {
     # === CPU / 处理器 ===
     "AMD":  ("4h", "CPU"),
     "INTC": ("8h", "CPU"),
+    "QCOM": ("8h", "CPU/移动"),  # ★加回 (用户 narrative 押注: 汽车 + AI PC + 5G modem)
     # === 晶圆代工 / 半导设备 ===
     "TSM":  ("4h", "晶圆代工"),
     "LRCX": ("8h", "半导设备"),
