@@ -15,8 +15,10 @@ from config import YF_HISTORY_DAYS_1H, YF_HISTORY_DAYS_1D
 def _to_ohlcv(df: pd.DataFrame) -> pd.DataFrame:
     """把 yfinance 返回的 DataFrame 转成统一 schema (毫秒时间戳)
 
-    重要: 过滤 volume=0 的 phantom bar — yfinance prepost 时段
-    偶尔会把无成交的虚价 tick 当成真实 OHLC, 触发假信号.
+    重要: 修复 phantom OHLC tick (不删除整根 bar):
+      - 美股盘后 yfinance 经常 volume=0 但 close 是真实的 (财报后跳涨等)
+      - 但偶尔会有错误 tick 导致 low/high 离谱 (low=$121 但 close=$414)
+      - 修补策略: low/high 异常时, 用 min/max(open, close) 替代
     """
     if df.empty:
         return pd.DataFrame(columns=["open_time", "open", "high", "low", "close", "volume", "close_time"])
@@ -26,19 +28,22 @@ def _to_ohlcv(df: pd.DataFrame) -> pd.DataFrame:
     df = df.rename(columns={"Open": "open", "High": "high", "Low": "low", "Close": "close", "Volume": "volume"})
     idx = pd.to_datetime(df.index, utc=True).as_unit("ns")
     df["open_time"] = idx.astype("int64") // 1_000_000
-    out = df.reset_index(drop=True)[["open_time", "open", "high", "low", "close", "volume"]]
-    # 过滤 phantom: volume==0 或 OHLC 异常 (low 超过 close 的 50% 以下, 明显错 tick)
-    out = out[out["volume"] > 0].copy()
-    if not out.empty:
-        out["_close_prev"] = out["close"].shift(1)
-        # low 不可能跌破前根 close 的 30% (即下跌 70%) - 这是 phantom tick 标志
-        bad_mask = (out["low"] < out["_close_prev"] * 0.3) & out["_close_prev"].notna()
-        if bad_mask.any():
-            n_bad = int(bad_mask.sum())
-            print(f"  ⚠️ 过滤 {n_bad} 根 OHLC 异常 bar (low 跌破前 close 70%)")
-            out = out[~bad_mask]
-        out = out.drop(columns=["_close_prev"])
-    return out.reset_index(drop=True)
+    out = df.reset_index(drop=True)[["open_time", "open", "high", "low", "close", "volume"]].copy()
+    if out.empty:
+        return out
+    # 修复 phantom OHLC: 如果 low/high 离 (open, close) 区间太远, 用 (open, close) 修补
+    oc_min = out[["open", "close"]].min(axis=1)
+    oc_max = out[["open", "close"]].max(axis=1)
+    # low 不应低于 min(open, close) 的 70% (允许 30% 区间内波动)
+    bad_low = out["low"] < oc_min * 0.7
+    # high 不应高于 max(open, close) 的 130%
+    bad_high = out["high"] > oc_max * 1.3
+    n_fixed = int(bad_low.sum() + bad_high.sum())
+    if n_fixed > 0:
+        out.loc[bad_low, "low"] = oc_min[bad_low]
+        out.loc[bad_high, "high"] = oc_max[bad_high]
+        print(f"  ⚠️ 修复 {n_fixed} 根 phantom OHLC tick (low/high 异常, 保留 open/close)")
+    return out
 
 
 def _add_close_time(df: pd.DataFrame, interval_ms: int) -> pd.DataFrame:
